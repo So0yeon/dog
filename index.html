@@ -969,7 +969,7 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   <div class="shop-card">
     <div class="shop-title">🏠 강아지 방 꾸미기</div>
     <div class="shop-budget">💰 남은 포인트: <span id="budget-display">100</span>p</div>
-    <div class="shop-required-notice">⚠️ 필수 아이템(🏠집, 🍽️식기, 🪣배변판)은 반드시 구매해야 해요!</div>
+    <div class="shop-required-notice">⚠️ 필수 아이템(🏠집, 🍽️식기, 🪣배변판, 🦮목줄)은 반드시 구매해야 해요!</div>
     <div class="shop-grid" id="shop-grid"></div>
     <button class="shop-btn" id="shop-done-btn" onclick="shopDone()" disabled>🐾 시뮬레이션 시작!</button>
   </div>
@@ -1096,21 +1096,19 @@ let stats = {
   stamina: 70
 };
 
-// Time System
+// Time System — 행동마다 1시간, 재우면 1달 경과
 const HOURS = [9,10,11,12,13,14,15,16,17,18,19,20,21];
 let hourIdx = 0;
-let day = 1;
-let totalDays = 1; // 1~28
+let currentMonth = 1;   // 1~7 (한 단계당 7달)
+let currentStage = 0;   // 0~3
 
-// Stage system: 아기(1-7), 활발(8-14), 성견(15-21), 노견(22-28)
+// 단계별 나이: 아기(1살), 활발(4살), 성견(9살), 노견(13살)
 const STAGES = [
-  { name: '🐣 아기 강아지', emoji: '🐶', bg: 'linear-gradient(160deg, #FFF0F5 0%, #FFE8B5 100%)', days: [1,7] },
-  { name: '🏃 활발한 강아지', emoji: '🐕', bg: 'linear-gradient(160deg, #E8FFF0 0%, #B5F0FF 100%)', days: [8,14] },
-  { name: '🐩 듬직한 성견', emoji: '🦮', bg: 'linear-gradient(160deg, #F0E8FF 0%, #FFE8FF 100%)', days: [15,21] },
-  { name: '🌸 지혜로운 노견', emoji: '🐕‍🦺', bg: 'linear-gradient(160deg, #FFF8E8 0%, #F0F8FF 100%)', days: [22,28] },
+  { name: '🐣 아기 강아지 (1살)', emoji: '🐶', bg: 'linear-gradient(160deg, #FFF0F5 0%, #FFE8B5 100%)', age: '1살' },
+  { name: '🏃 활발한 강아지 (4살)', emoji: '🐕', bg: 'linear-gradient(160deg, #E8FFF0 0%, #B5F0FF 100%)', age: '4살' },
+  { name: '🐩 듬직한 성견 (9살)', emoji: '🦮', bg: 'linear-gradient(160deg, #F0E8FF 0%, #FFE8FF 100%)', age: '9살' },
+  { name: '🌸 지혜로운 노견 (13살)', emoji: '🐕‍🦺', bg: 'linear-gradient(160deg, #FFF8E8 0%, #F0F8FF 100%)', age: '13살' },
 ];
-
-let currentStage = 0;
 
 // Stat accumulation for ending
 let totalHappiness = 0;
@@ -1226,7 +1224,7 @@ const SHOP_ITEMS = [
   { id: 'bowl_basic', emoji: '🥣', name: '기본 플라스틱 식기', price: 10, essential: false, essentialType: 'bowl' },
   { id: 'toilet', emoji: '🪣', name: '배변판', price: 15, essential: false, essentialType: 'toilet' },
   { id: 'toy', emoji: '🎾', name: '장난감 세트', price: 20, essential: false, essentialType: null },
-  { id: 'leash', emoji: '🦮', name: '예쁜 목줄', price: 15, essential: false, essentialType: null },
+  { id: 'leash', emoji: '🦮', name: '목줄', price: 10, essential: false, essentialType: 'leash' },
 ];
 
 let budget = 100;
@@ -1337,6 +1335,22 @@ const ALL_EVENTS = [
     choices: [
       { text: '🛡️ 천천히 소개하기 - "먼저 냄새 맡게 해줘"', good: true, effect: '올바른 소개 방법이에요! 강아지가 안심했어요.', statChange: {happiness: 15}, score: 12 },
       { text: '😅 그냥 두기 - "괜찮아, 안 물어"', good: false, effect: '강아지가 깜짝 놀라서 스트레스를 받았어요!', statChange: {happiness: -15, stamina: -10}, score: -8 }
+    ]
+  },
+  {
+    type: 'home',
+    emoji: '👃',
+    title: '강아지한테 냄새가 나요...',
+    desc: '씻은 지 일주일밖에 안 됐는데 강아지한테서 냄새가 나요. 어떻게 할까요?',
+    choices: [
+      { text: '🪮 빗질하며 강아지용 미스트 뿌려주기', good: true,
+        effect: '털이 보송보송해지고 냄새도 줄었어요! 강아지도 기분 좋아요.',
+        statChange: {cleanliness: 20, happiness: 5}, score: 12,
+        tip: '💡 알고 계셨나요? 강아지는 피부가 약해서 3주에 1번 정도만 씻겨주는 것이 좋아요. 냄새가 날 땐 강아지용 미스트를 뿌리며 털을 빗어주세요!' },
+      { text: '🛁 바로 목욕시키기', good: false,
+        effect: '너무 자주 씻기면 강아지 피부와 피모가 상할 수 있어요!',
+        statChange: {cleanliness: 10, happiness: -15, stamina: -10}, score: -5,
+        tip: '💡 알고 계셨나요? 강아지는 피부가 약해서 3주에 1번 정도만 씻겨주는 것이 좋아요. 냄새가 날 땐 강아지용 미스트를 뿌리며 털을 빗어주세요!' }
     ]
   }
 ];
@@ -1677,18 +1691,18 @@ function loadShop() {
 
 function buyItem(item) {
   const div = document.getElementById('shop-' + item.id);
-  
-  // 1. 이미 선택한 아이템을 다시 누른 경우 -> 선택 해제 (장바구니에서 빼기)
+
+  // ── 이미 구매한 아이템 → 취소(환불) ──
   if (purchasedItems.has(item.id)) {
-    budget += item.price; // 깎였던 포인트 다시 복구
-    purchasedItems.delete(item.id); // 선택 목록에서 제거
-    if (item.essentialType) purchasedEssentials.delete(item.essentialType); // 필수템 목록에서도 제거
-    
-    div.classList.remove('purchased'); // 화면에서 선택 테두리 효과 제거
-    
-    updateBudgetDisplay(); // 포인트 화면 갱신
-    
-    // 다른 아이템들의 구매 가능(회색 처리) 상태 다시 계산
+    budget += item.price;
+    purchasedItems.delete(item.id);
+    if (item.essentialType) purchasedEssentials.delete(item.essentialType);
+
+    div.classList.remove('purchased');
+    updateBudgetDisplay();
+    addDiaryEntry(`↩️ ${item.name} 구매를 취소했어요. ${item.price}p 환불!`);
+
+    // 다른 아이템 구매 가능 여부 재계산
     SHOP_ITEMS.forEach(i => {
       const d = document.getElementById('shop-' + i.id);
       if (!purchasedItems.has(i.id)) {
@@ -1696,40 +1710,36 @@ function buyItem(item) {
         else d.classList.remove('cant-afford');
       }
     });
-    
-    checkShopReady(); // 필수템이 빠졌는지 확인해서 시작 버튼 다시 잠그기
-    return; // 여기서 함수를 끝냅니다.
+    checkShopReady();
+    return;
   }
-  
-  // 2. 처음 누른 경우 -> 선택 (장바구니에 담기)
-  
-  // 같은 종류(집, 식기 등)의 필수템을 이미 골랐는지 확인
+
+  // ── 같은 essentialType 이미 구매됨 ──
   if (item.essentialType && [...purchasedItems].some(id => {
     const found = SHOP_ITEMS.find(i => i.id === id);
     return found && found.essentialType === item.essentialType;
   })) {
-    showWarning('같은 종류 아이템이 이미 선택되어 있어요! 기존 것을 한 번 더 눌러 취소해주세요.');
+    showWarning('같은 종류 아이템이 이미 있어요! 기존 것을 먼저 취소해주세요.');
     return;
   }
-  
-  // 포인트가 부족한지 확인
+
+  // ── 예산 부족 ──
   if (budget < item.price) {
     showWarning('포인트가 부족해요! 💸');
     div.classList.add('cant-afford');
     return;
   }
-  
-  // 포인트 차감 및 목록에 추가
+
+  // ── 구매 ──
   budget -= item.price;
   purchasedItems.add(item.id);
   if (item.essentialType) purchasedEssentials.add(item.essentialType);
-  
-  div.classList.add('purchased'); // 화면에 선택 테두리 효과 추가
-  // 🚨 여기에 있던 div.onclick = null; 을 삭제했습니다. (다시 누를 수 있어야 하니까요!)
-  
-  updateBudgetDisplay(); // 포인트 화면 갱신
-  
-  // 다른 아이템들의 구매 가능(회색 처리) 상태 계산
+
+  div.classList.add('purchased');
+  updateBudgetDisplay();
+  addDiaryEntry(`🛒 ${item.name} ${item.price}p에 구매했어요! (다시 누르면 취소)`);
+
+  // 다른 아이템 구매 가능 여부 재계산
   SHOP_ITEMS.forEach(i => {
     const d = document.getElementById('shop-' + i.id);
     if (!purchasedItems.has(i.id)) {
@@ -1737,8 +1747,8 @@ function buyItem(item) {
       else d.classList.remove('cant-afford');
     }
   });
-  
-  checkShopReady(); // 필수템 다 모였는지 확인해서 시작 버튼 열기
+
+  checkShopReady();
 }
 
 function updateBudgetDisplay() {
@@ -1746,7 +1756,7 @@ function updateBudgetDisplay() {
 }
 
 function checkShopReady() {
-  const required = ['house', 'bowl', 'toilet'];
+  const required = ['house', 'bowl', 'toilet', 'leash'];
   const allReady = required.every(r => purchasedEssentials.has(r));
   document.getElementById('shop-done-btn').disabled = !allReady;
 }
@@ -1762,20 +1772,19 @@ function shopDone() {
 function startSimulation() {
   stats = { happiness: 70, fullness: 70, cleanliness: 70, stamina: 70 };
   hourIdx = 0;
-  day = 1;
-  totalDays = 1;
+  currentMonth = 1;
   currentStage = 0;
   totalHappiness = 0;
   totalCleanliness = 0;
   eventScore = 0;
   actionCount = 0;
-  
+
   document.getElementById('stat-dog-name').textContent = dogName;
   showScreen('game');
   updateGameUI();
   updateScene();
-  
-  addDiaryEntry(`🎉 ${dogName}와 함께하는 28일이 시작됐어요!`, 'milestone');
+
+  addDiaryEntry(`🎉 ${dogName}와 함께하는 견생이 시작됐어요! 아기 강아지 1달째 🐾`, 'milestone');
   resetEventQueues();
 }
 
@@ -1784,55 +1793,51 @@ function startSimulation() {
 // ============================================================
 function getTimeLabel() {
   const hour = HOURS[hourIdx];
-  let period = '';
-  if (hour < 12) period = '오전';
-  else if (hour < 18) period = '오후';
-  else period = '저녁';
-  return `Day ${day} | ${period} ${hour}시`;
+  let period = hour < 12 ? '오전' : hour < 18 ? '오후' : '저녁';
+  const stageName = STAGES[currentStage].name;
+  return `${stageName} | ${currentMonth}달째 | ${period} ${hour}시`;
 }
 
 function advanceTime() {
   hourIdx++;
   if (hourIdx >= HOURS.length) {
     hourIdx = 0;
-    day++;
-    totalDays++;
-    
-    // Natural stat decay per day — 포만감 빠르게, 청결도 느리게
-    // 아기 강아지(stage 0)는 포만감이 더 빠르게 감소
+    // 하루치 스탯 감소 (하루가 지남)
     const fullnessDecay = currentStage === 0 ? -20 : -15;
     applyStatChange({ happiness: -5, fullness: fullnessDecay, cleanliness: -3, stamina: 0 });
-    
-    addDiaryEntry(`🌅 Day ${day} 아침이 밝았어요!`, 'milestone');
-    
-    // Check stage
-    checkStageUp();
-    
-    // Check end
-    if (totalDays > 28) {
-      triggerEnding();
-      return;
-    }
   }
   document.getElementById('stat-day').textContent = getTimeLabel();
 }
 
-function checkStageUp() {
-  const stages = [
-    { stage: 0, days: 1 },
-    { stage: 1, days: 8 },
-    { stage: 2, days: 15 },
-    { stage: 3, days: 22 },
-  ];
-  
-  for (let i = stages.length - 1; i >= 0; i--) {
-    if (totalDays >= stages[i].days && currentStage < i) {
-      currentStage = i;
-      showPhaseTransition();
-      updateScene();
-      break;
+// 재우기: 한 달 경과
+function advanceMonth() {
+  currentMonth++;
+  hourIdx = 0;
+
+  const fullnessDecay = currentStage === 0 ? -20 : -15;
+  applyStatChange({ happiness: -5, fullness: fullnessDecay, cleanliness: -5, stamina: 0 });
+
+  if (currentMonth > 7) {
+    // 다음 단계로
+    currentStage++;
+    if (currentStage >= STAGES.length) {
+      // 노견 7달 완료 → 엔딩
+      triggerEnding();
+      return false; // 종료 신호
     }
+    currentMonth = 1;
+    showPhaseTransition();
+    updateScene();
+    addDiaryEntry(`🌟 어느새 시간이 훌쩍 흘렀어요! ${STAGES[currentStage].name}이 됐어요!`, 'milestone');
+  } else {
+    addDiaryEntry(`📅 ${currentMonth - 1}달이 지났어요. 어느새 ${STAGES[currentStage].name}! 🐾`, 'milestone');
   }
+  document.getElementById('stat-day').textContent = getTimeLabel();
+  return true; // 계속 진행
+}
+
+function checkStageUp() {
+  // month 기반이라 advanceMonth에서 직접 처리. 이 함수는 호환용으로 비워둠
 }
 
 // ============================================================
@@ -1876,28 +1881,11 @@ function doAction(action) {
       break;
     case 'rest': {
       // 쉬기: 3시간 경과, 체력 30 회복 (낮잠 개념)
-      const restHours = 3;
       stats.stamina = Math.min(100, stats.stamina + 30);
       text = `🛋️ ${dogName}가 잠깐 쉬었어요! 3시간이 지나갔어요. 체력 +30`;
-      // advance 3 hours
-      for (let i = 0; i < restHours; i++) {
+      for (let i = 0; i < 3; i++) {
         hourIdx++;
-        if (hourIdx >= HOURS.length) {
-          hourIdx = 0;
-          day++;
-          totalDays++;
-          const fullnessDecay = currentStage === 0 ? -20 : -15;
-          applyStatChange({ happiness: -5, fullness: fullnessDecay, cleanliness: -3, stamina: 0 });
-          addDiaryEntry(`🌅 Day ${day} 아침이 밝았어요!`, 'milestone');
-          checkStageUp();
-          if (totalDays > 28) {
-            addDiaryEntry(text);
-            updateGameUI();
-            updateScene();
-            triggerEnding();
-            return;
-          }
-        }
+        if (hourIdx >= HOURS.length) hourIdx = HOURS.length - 1;
       }
       updateStatUI();
       addDiaryEntry(text);
@@ -1908,17 +1896,15 @@ function doAction(action) {
       return;
     }
     case 'sleep': {
-      const isNight = HOURS[hourIdx] >= 21;
-      const recovery = isNight ? 100 : 50;
-      stats.stamina = Math.min(100, stats.stamina + recovery);
-      hourIdx = HOURS.length - 1; // Force day advance on next advanceTime
-      text = `💤 ${dogName}가 잘 자고 일어났어요! 체력 ${recovery} 회복!`;
-      advanceTime();
-      applyStatChange({});
+      // 재우기: 한 달 경과, 체력 완전 회복
+      stats.stamina = 100;
+      stats.fullness = Math.max(0, stats.fullness - 10); // 한 달 지나니 배고픔
+      text = `💤 ${dogName}가 푹 잤어요! 한 달이 훌쩍 지났어요. 체력 완전 회복!`;
       addDiaryEntry(text);
+      const cont = advanceMonth();
       updateGameUI();
       updateScene();
-      checkWarnings();
+      if (cont) checkWarnings();
       buttons.forEach(b => b.disabled = false);
       return;
     }
@@ -2094,11 +2080,14 @@ function resolveEvent(choice) {
   document.getElementById('event-overlay').classList.remove('show');
   applyStatChange(choice.statChange);
   eventScore += choice.score;
-  
   const type = choice.good ? 'milestone' : 'warning';
-  addDiaryEntry(`⚡ 이벤트: ${choice.effect}`, type);
-  
-  showStatChange(choice.effect);
+  addDiaryEntry(`u26a1 uc774ubca4ud2b8: ${choice.effect}`, type);
+  if (choice.tip) {
+    addDiaryEntry(choice.tip, 'milestone');
+    setTimeout(() => showTipPopup(choice.tip), 400);
+  } else {
+    showStatChange(choice.effect);
+  }
   updateScene();
   checkWarnings();
 }
@@ -2130,7 +2119,7 @@ function showPhaseTransition() {
   const s = STAGES[currentStage];
   const pt = document.getElementById('phase-transition');
   document.getElementById('pt-emoji').textContent = s.emoji;
-  document.getElementById('pt-text').textContent = `${dogName}가 ${s.name}로 성장했어요!`;
+  document.getElementById('pt-text').textContent = `시간이 훌쩍 흘러... ${dogName}가 ${s.age}이 됐어요!`;
   
   pt.classList.add('show');
   playSound('levelup');
@@ -2167,6 +2156,21 @@ function showStatChange(text) {
   document.body.appendChild(popup);
   
   setTimeout(() => popup.remove(), 2200);
+}
+
+function showTipPopup(tipText) {
+  // 팁 전용 모달 (이벤트 팝업 재활용)
+  document.getElementById('event-emoji').textContent = '💡';
+  document.getElementById('event-title').textContent = '알고 계셨나요?';
+  document.getElementById('event-desc').textContent = tipText;
+  const choicesDiv = document.getElementById('event-choices');
+  choicesDiv.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'event-choice';
+  btn.textContent = '✅ 알겠어요!';
+  btn.onclick = () => document.getElementById('event-overlay').classList.remove('show');
+  choicesDiv.appendChild(btn);
+  document.getElementById('event-overlay').classList.add('show');
 }
 
 // ============================================================
@@ -2299,10 +2303,13 @@ function restartGame() {
   budget = 100;
   purchasedItems.clear();
   purchasedEssentials.clear();
-  
+  currentMonth = 1;
+  currentStage = 0;
+  hourIdx = 0;
+
   document.getElementById('diary-entries').innerHTML = '';
   document.getElementById('dog-name-input').value = '';
-  
+
   showScreen('title');
 }
 </script>
