@@ -1678,37 +1678,58 @@ function loadShop() {
 function buyItem(item) {
   const div = document.getElementById('shop-' + item.id);
   
+  // 1. 이미 선택한 아이템을 다시 누른 경우 -> 선택 해제 (장바구니에서 빼기)
   if (purchasedItems.has(item.id)) {
-    showWarning('이미 구매한 아이템이에요!');
-    return;
+    budget += item.price; // 깎였던 포인트 다시 복구
+    purchasedItems.delete(item.id); // 선택 목록에서 제거
+    if (item.essentialType) purchasedEssentials.delete(item.essentialType); // 필수템 목록에서도 제거
+    
+    div.classList.remove('purchased'); // 화면에서 선택 테두리 효과 제거
+    
+    updateBudgetDisplay(); // 포인트 화면 갱신
+    
+    // 다른 아이템들의 구매 가능(회색 처리) 상태 다시 계산
+    SHOP_ITEMS.forEach(i => {
+      const d = document.getElementById('shop-' + i.id);
+      if (!purchasedItems.has(i.id)) {
+        if (budget < i.price) d.classList.add('cant-afford');
+        else d.classList.remove('cant-afford');
+      }
+    });
+    
+    checkShopReady(); // 필수템이 빠졌는지 확인해서 시작 버튼 다시 잠그기
+    return; // 여기서 함수를 끝냅니다.
   }
   
-  // Check if same essential type already purchased
+  // 2. 처음 누른 경우 -> 선택 (장바구니에 담기)
+  
+  // 같은 종류(집, 식기 등)의 필수템을 이미 골랐는지 확인
   if (item.essentialType && [...purchasedItems].some(id => {
     const found = SHOP_ITEMS.find(i => i.id === id);
     return found && found.essentialType === item.essentialType;
   })) {
-    showWarning('같은 종류 아이템이 이미 있어요!');
+    showWarning('같은 종류 아이템이 이미 선택되어 있어요! 기존 것을 한 번 더 눌러 취소해주세요.');
     return;
   }
   
+  // 포인트가 부족한지 확인
   if (budget < item.price) {
     showWarning('포인트가 부족해요! 💸');
     div.classList.add('cant-afford');
     return;
   }
   
+  // 포인트 차감 및 목록에 추가
   budget -= item.price;
   purchasedItems.add(item.id);
   if (item.essentialType) purchasedEssentials.add(item.essentialType);
   
-  div.classList.add('purchased');
-  div.onclick = null;
+  div.classList.add('purchased'); // 화면에 선택 테두리 효과 추가
+  // 🚨 여기에 있던 div.onclick = null; 을 삭제했습니다. (다시 누를 수 있어야 하니까요!)
   
-  updateBudgetDisplay();
-  addDiaryEntry(`🛒 ${item.name} ${item.price}p에 구매했어요!`);
+  updateBudgetDisplay(); // 포인트 화면 갱신
   
-  // Update other items cant-afford
+  // 다른 아이템들의 구매 가능(회색 처리) 상태 계산
   SHOP_ITEMS.forEach(i => {
     const d = document.getElementById('shop-' + i.id);
     if (!purchasedItems.has(i.id)) {
@@ -1717,7 +1738,7 @@ function buyItem(item) {
     }
   });
   
-  checkShopReady();
+  checkShopReady(); // 필수템 다 모였는지 확인해서 시작 버튼 열기
 }
 
 function updateBudgetDisplay() {
