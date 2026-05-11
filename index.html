@@ -2206,7 +2206,7 @@ function triggerEnding() {
       grade: 'S',
       title: '국가대표 어질리티 선수견!',
       color: '#FF6B9D',
-      desc: `${dogName}는 28일 내내 완벽한 돌봄을 받으며 국가대표 어질리티 선수견이 됐어요! 정말 대단한 보호자예요. 이 정도면 진짜 강아지를 키울 준비가 충분히 됐어요! 🌟`
+      desc: `${dogName}는 견생 내내 완벽한 돌봄을 받으며 국가대표 어질리티 선수견이 됐어요! 정말 대단한 보호자예요. 이 정도면 진짜 강아지를 키울 준비가 충분히 됐어요! 🌟`
     };
   } else if (totalScore >= 118) {
     ending = {
@@ -2254,14 +2254,14 @@ function triggerEnding() {
       grade: 'F',
       title: '불쌍한 강아지 😭',
       color: '#FF6B6B',
-      desc: `${dogName}는 정말 힘든 28일을 보냈어요. 이번 게임을 통해 반려동물 돌봄이 얼마나 중요한지 알았죠? 실제 동물을 기르기 전, 꼭 충분히 공부하고 준비해요. 모든 동물은 사랑받을 자격이 있어요. 💪`
+      desc: `${dogName}는 정말 힘든 견생을 보냈어요. 이번 게임을 통해 반려동물 돌봄이 얼마나 중요한지 알았죠? 실제 동물을 기르기 전, 꼭 충분히 공부하고 준비해요. 모든 동물은 사랑받을 자격이 있어요. 💪`
     };
   }
 
   document.getElementById('ending-emoji').textContent = ending.emoji;
   document.getElementById('ending-title').textContent = ending.title;
   document.getElementById('ending-dog-name').innerHTML =
-    `<span style="color:${ending.color}">${dogName}</span>의 28일 이야기`;
+    `<span style="color:${ending.color}">${dogName}</span>의 견생 이야기`;
   document.getElementById('ending-desc').textContent = ending.desc;
 
   const statsDiv = document.getElementById('ending-stats');
