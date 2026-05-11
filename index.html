@@ -798,7 +798,7 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   background: var(--card-bg);
   border-radius: 30px;
   padding: 48px 40px;
-  max-width: 500px;
+  max-width: 550px;
   width: 100%;
   box-shadow: 0 20px 60px var(--shadow);
 }
@@ -818,7 +818,7 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
 .ending-stats {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 15px;
   margin: 20px 0;
   flex-wrap: wrap;
 }
@@ -914,7 +914,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
 </head>
 <body>
 
-<!-- ======= TITLE SCREEN ======= -->
 <div id="screen-title" class="screen active">
   <div class="star" style="top:10%;left:10%;animation-delay:0s;">⭐</div>
   <div class="star" style="top:20%;right:15%;animation-delay:1s;">✨</div>
@@ -931,7 +930,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   <p style="margin-top:20px;font-size:13px;color:#B0A0A0;">초등학교 5학년 실과 '동물 기르기' 학습 게임</p>
 </div>
 
-<!-- ======= QUIZ SCREEN ======= -->
 <div id="screen-quiz" class="screen">
   <div class="quiz-card">
     <div class="quiz-header">
@@ -948,7 +946,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   </div>
 </div>
 
-<!-- ======= PERSUADE SCREEN ======= -->
 <div id="screen-persuade" class="screen">
   <div class="persuade-card">
     <div class="persuade-header">🌟 책임감 게이지</div>
@@ -964,7 +961,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   </div>
 </div>
 
-<!-- ======= SHOP SCREEN ======= -->
 <div id="screen-shop" class="screen">
   <div class="shop-card">
     <div class="shop-title">🏠 강아지 방 꾸미기</div>
@@ -975,11 +971,8 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   </div>
 </div>
 
-<!-- ======= MAIN GAME SCREEN ======= -->
 <div id="screen-game" class="screen">
-  <!-- Left Side -->
   <div class="game-left">
-    <!-- Status Bar -->
     <div class="status-bar">
       <span class="stat-name">🐾 <span id="stat-dog-name">멍멍이</span></span>
       <span class="stat-day" id="stat-day">Day 1 | 오전 9시</span>
@@ -1007,14 +1000,12 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
       </div>
     </div>
 
-    <!-- Dog Scene -->
     <div class="dog-scene" id="dog-scene">
       <div class="dog-stage-badge" id="stage-badge">🐾 아기 강아지</div>
       <span class="dog-emoji" id="dog-emoji">🐶</span>
       <div class="dog-status-text" id="dog-status-text">안녕! 잘 부탁해 멍멍! 🐾</div>
     </div>
 
-    <!-- Action Panel -->
     <div class="action-panel">
       <div class="action-title">✨ 어떻게 돌봐줄까요?</div>
       <div class="action-grid">
@@ -1046,14 +1037,12 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
     </div>
   </div>
 
-  <!-- Diary Panel -->
   <div class="diary-panel">
     <div class="diary-header">📓 돌봄 일지</div>
     <div class="diary-entries" id="diary-entries"></div>
   </div>
 </div>
 
-<!-- ======= ENDING SCREEN ======= -->
 <div id="screen-ending" class="screen">
   <div class="ending-card">
     <span class="ending-emoji" id="ending-emoji">🏆</span>
@@ -1065,7 +1054,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   </div>
 </div>
 
-<!-- ======= EVENT POPUP ======= -->
 <div class="event-overlay" id="event-overlay">
   <div class="event-popup">
     <span class="event-emoji" id="event-emoji">⚡</span>
@@ -1075,7 +1063,6 @@ h1, h2, h3, .game-title, .btn-main, .stat-label {
   </div>
 </div>
 
-<!-- ======= PHASE TRANSITION ======= -->
 <div class="phase-transition" id="phase-transition">
   <div class="phase-transition-emoji" id="pt-emoji">🐶</div>
   <div class="phase-transition-text" id="pt-text">성장했어요!</div>
@@ -1113,8 +1100,19 @@ const STAGES = [
 // Stat accumulation for ending
 let totalHappiness = 0;
 let totalCleanliness = 0;
+// [추가] 과락 방지를 위한 전체 스탯 추적 변수
+let totalFullness = 0;
+let totalStamina = 0;
 let eventScore = 0;
 let actionCount = 0;
+
+// [추가] 방치 히스토리 추적 객체
+let warningHistory = {
+  happiness: false,
+  fullness: false,
+  cleanliness: false,
+  stamina: false
+};
 
 // Responsibility (prologue)
 let responsibility = 0;
@@ -1235,124 +1233,17 @@ let purchasedEssentials = new Set();
 //  EVENTS DATA (10개 - 산책5, 집5, 순차 비중복)
 // ============================================================
 const ALL_EVENTS = [
-  // ── 산책 이벤트 (type:'walk') ──
-  {
-    type: 'walk',
-    emoji: '🍫',
-    title: '길에 초콜릿이 떨어져 있어!',
-    desc: '산책 중에 바닥에 초콜릿이 떨어져 있어요. 강아지가 냄새를 맡으며 다가가려 해요!',
-    choices: [
-      { text: '🚫 막기 - "안 돼! 위험해!"', good: true, effect: '잘 막았어요! 초콜릿은 개에게 독이 될 수 있어요.', statChange: {happiness: -5}, score: 10 },
-      { text: '😐 두기 - "조금은 괜찮겠지..."', good: false, effect: '강아지가 초콜릿을 먹었어요! 배가 아파요...', statChange: {happiness: -20, stamina: -20}, score: -10 }
-    ]
-  },
-  {
-    type: 'walk',
-    emoji: '🐕',
-    title: '목줄 풀린 개가 다가와요!',
-    desc: '갑자기 목줄이 풀린 큰 개가 우리 강아지에게 달려오고 있어요!',
-    choices: [
-      { text: '🤗 안아 올리기 - 강아지를 번쩍 안기', good: true, effect: '강아지를 지켰어요! 강아지가 안심했어요.', statChange: {happiness: 15}, score: 10 },
-      { text: '🏃 도망가기 - 줄을 당기며 빨리 피하기', good: true, effect: '빠르게 피했어요! 무사히 지나갔어요.', statChange: {happiness: 5, stamina: -10}, score: 5 }
-    ]
-  },
-  {
-    type: 'walk',
-    emoji: '🌭',
-    title: '이웃이 소시지를 주려고 해요!',
-    desc: '친절한 이웃 할머니가 강아지에게 소시지를 주시려고 해요.',
-    choices: [
-      { text: '🙏 거절하기 - "감사하지만 사람 음식은 안 돼요"', good: true, effect: '올바른 판단이에요! 낯선 음식은 위험할 수 있어요.', statChange: {happiness: 5}, score: 10 },
-      { text: '😋 수락하기 - "감사해요!"', good: false, effect: '소시지는 염분이 많아 강아지에게 좋지 않아요!', statChange: {fullness: 10, stamina: -10}, score: -5 }
-    ]
-  },
-  {
-    type: 'walk',
-    emoji: '🌧️',
-    title: '갑자기 비가 내려요!',
-    desc: '맑던 하늘에서 갑자기 빗방울이 떨어지기 시작해요! 강아지가 걱정돼요.',
-    choices: [
-      { text: '🏃 빨리 귀가하기 - 빗속에서 빠르게 뛰어가기', good: true, effect: '비를 조금만 맞고 돌아왔어요! 잘했어요.', statChange: {cleanliness: -10, stamina: -5}, score: 5 },
-      { text: '🎉 비 맞으며 놀기 - 강아지가 좋아하는 것 같아!', good: false, effect: '흠뻑 젖었어요. 빗물은 강아지 피부에 안 좋을 수 있어요!', statChange: {cleanliness: -30, happiness: 10}, score: -5 }
-    ]
-  },
-  {
-    type: 'walk',
-    emoji: '🌿',
-    title: '공원에서 풀밭을 발견했어요!',
-    desc: '근처 공원에 넓은 풀밭이 있어요. 강아지가 신나서 뛰어가려 해요!',
-    choices: [
-      { text: '🐾 자유롭게 뛰어놀게 하기', good: true, effect: '강아지가 너무 신나서 행복해해요! 에너지 충전!', statChange: {happiness: 25, stamina: -10}, score: 10 },
-      { text: '🚫 제지하기 - "잡초나 독초가 있을 수 있어!"', good: true, effect: '안전을 챙긴 보호자예요. 강아지는 아쉬워했지만 괜찮아요.', statChange: {happiness: -5}, score: 8 }
-    ]
-  },
-  // ── 집 이벤트 (type:'home') ──
-  {
-    type: 'home',
-    emoji: '😮',
-    title: '강아지가 벽지를 뜯고 있어!',
-    desc: '집에 혼자 있던 강아지가 심심했는지 벽지를 뜯고 있어요!',
-    choices: [
-      { text: '🚫 단호하게 - "안 돼!" 하고 장난감 주기', good: true, effect: '올바른 훈육이에요! 강아지가 학습해요.', statChange: {happiness: -5}, score: 10 },
-      { text: '🎮 그냥 두기 - 놀면 됐지 뭐', good: false, effect: '경계를 설정하지 않으면 버릇이 나빠질 수 있어요.', statChange: {happiness: 10, cleanliness: -10}, score: -5 }
-    ]
-  },
-  {
-    type: 'home',
-    emoji: '😢',
-    title: '강아지가 낑낑대며 아파해요!',
-    desc: '강아지가 갑자기 낑낑거리며 배를 움켜잡는 것처럼 움직이지 않아요.',
-    choices: [
-      { text: '🏥 즉시 병원 데려가기', good: true, effect: '빠른 대처 덕분에 금방 나았어요! 최고의 보호자예요!', statChange: {happiness: 20, stamina: 20}, score: 15 },
-      { text: '🕐 지켜보기 - 좀 있으면 나겠지', good: false, effect: '증상이 심해졌어요... 빠른 대처가 중요해요!', statChange: {happiness: -20, stamina: -25}, score: -15 }
-    ]
-  },
-  {
-    type: 'home',
-    emoji: '🪮',
-    title: '털이 엄청 빠지고 있어요!',
-    desc: '환절기인지 강아지 털이 쑥쑥 빠지고 있어요. 방 바닥이 털투성이예요!',
-    choices: [
-      { text: '🖌️ 빗질해주기 - 빗으로 꼼꼼히 정리해주기', good: true, effect: '빗질 덕분에 털 날림이 줄었어요! 강아지도 기분 좋아요.', statChange: {cleanliness: 15, happiness: 10}, score: 10 },
-      { text: '😤 그냥 두기 - "나중에 청소하면 되지"', good: false, effect: '털이 계속 날려서 청결도가 더 떨어졌어요.', statChange: {cleanliness: -20}, score: -5 }
-    ]
-  },
-  {
-    type: 'home',
-    emoji: '🍖',
-    title: '강아지가 식탁 위 음식을 노려봐요!',
-    desc: '저녁 식사를 차려두었더니 강아지가 식탁 위 사람 음식을 먹으려 해요!',
-    choices: [
-      { text: '🚫 단호히 막기 - "사람 음식은 안 돼!"', good: true, effect: '훌륭한 훈육이에요! 강아지 건강을 지켰어요.', statChange: {happiness: -5}, score: 12 },
-      { text: '💕 조금만 줘도 되지 뭐...', good: false, effect: '사람 음식은 강아지에게 해로울 수 있어요. 소금, 양념이 위험해요!', statChange: {fullness: 10, stamina: -15, cleanliness: -5}, score: -10 }
-    ]
-  },
-  {
-    type: 'home',
-    emoji: '😴',
-    title: '손님이 강아지를 만지려 해요!',
-    desc: '친구가 집에 놀러 왔어요. 강아지에게 갑자기 달려들어 안으려 해요!',
-    choices: [
-      { text: '🛡️ 천천히 소개하기 - "먼저 냄새 맡게 해줘"', good: true, effect: '올바른 소개 방법이에요! 강아지가 안심했어요.', statChange: {happiness: 15}, score: 12 },
-      { text: '😅 그냥 두기 - "괜찮아, 안 물어"', good: false, effect: '강아지가 깜짝 놀라서 스트레스를 받았어요!', statChange: {happiness: -15, stamina: -10}, score: -8 }
-    ]
-  },
-  {
-    type: 'home',
-    emoji: '👃',
-    title: '강아지한테 냄새가 나요...',
-    desc: '씻은 지 일주일밖에 안 됐는데 강아지한테서 냄새가 나요. 어떻게 할까요?',
-    choices: [
-      { text: '🪮 빗질하며 강아지용 미스트 뿌려주기', good: true,
-        effect: '털이 보송보송해지고 냄새도 줄었어요! 강아지도 기분 좋아요.',
-        statChange: {cleanliness: 20, happiness: 5}, score: 12,
-        tip: '💡 알고 계셨나요? 강아지는 피부가 약해서 3주에 1번 정도만 씻겨주는 것이 좋아요. 냄새가 날 땐 강아지용 미스트를 뿌리며 털을 빗어주세요!' },
-      { text: '🛁 바로 목욕시키기', good: false,
-        effect: '너무 자주 씻기면 강아지 피부와 피모가 상할 수 있어요!',
-        statChange: {cleanliness: 10, happiness: -15, stamina: -10}, score: -5,
-        tip: '💡 알고 계셨나요? 강아지는 피부가 약해서 3주에 1번 정도만 씻겨주는 것이 좋아요. 냄새가 날 땐 강아지용 미스트를 뿌리며 털을 빗어주세요!' }
-    ]
-  }
+  { type: 'walk', emoji: '🍫', title: '길에 초콜릿이 떨어져 있어!', desc: '산책 중에 바닥에 초콜릿이 떨어져 있어요. 강아지가 다가가려 해요!', choices: [ { text: '🚫 막기', good: true, effect: '잘 막았어요!', statChange: {happiness: -5}, score: 10 }, { text: '😐 두기', good: false, effect: '강아지가 배가 아파요...', statChange: {happiness: -20, stamina: -20}, score: -10 } ] },
+  { type: 'walk', emoji: '🐕', title: '목줄 풀린 개가 다가와요!', desc: '갑자기 목줄이 풀린 큰 개가 달려와요!', choices: [ { text: '🤗 안아 올리기', good: true, effect: '강아지를 지켰어요!', statChange: {happiness: 15}, score: 10 }, { text: '🏃 도망가기', good: true, effect: '무사히 지나갔어요.', statChange: {happiness: 5, stamina: -10}, score: 5 } ] },
+  { type: 'walk', emoji: '🌭', title: '이웃이 소시지를 주려 해요!', desc: '이웃 할머니가 소시지를 주시려고 해요.', choices: [ { text: '🙏 거절하기', good: true, effect: '올바른 판단이에요!', statChange: {happiness: 5}, score: 10 }, { text: '😋 수락하기', good: false, effect: '사람 음식은 안 좋아요!', statChange: {fullness: 10, stamina: -10}, score: -5 } ] },
+  { type: 'walk', emoji: '🌧️', title: '갑자기 비가 내려요!', desc: '맑던 하늘에서 비가 내려요!', choices: [ { text: '🏃 빨리 귀가하기', good: true, effect: '비를 조금만 맞았어요!', statChange: {cleanliness: -10, stamina: -5}, score: 5 }, { text: '🎉 비 맞으며 놀기', good: false, effect: '흠뻑 젖었어요!', statChange: {cleanliness: -30, happiness: 10}, score: -5 } ] },
+  { type: 'walk', emoji: '🌿', title: '풀밭을 발견했어요!', desc: '강아지가 풀밭으로 신나서 뛰어가려 해요!', choices: [ { text: '🐾 자유롭게 뛰어놀게 하기', good: true, effect: '강아지가 너무 신나해요!', statChange: {happiness: 25, stamina: -10}, score: 10 }, { text: '🚫 제지하기', good: true, effect: '안전을 챙겼어요.', statChange: {happiness: -5}, score: 8 } ] },
+  { type: 'home', emoji: '😮', title: '강아지가 벽지를 뜯어요!', desc: '강아지가 벽지를 뜯고 있어요!', choices: [ { text: '🚫 단호하게 "안 돼!"', good: true, effect: '올바른 훈육이에요!', statChange: {happiness: -5}, score: 10 }, { text: '🎮 그냥 두기', good: false, effect: '버릇이 나빠질 수 있어요.', statChange: {happiness: 10, cleanliness: -10}, score: -5 } ] },
+  { type: 'home', emoji: '😢', title: '강아지가 낑낑대며 아파해요!', desc: '배를 움켜잡고 움직이지 않아요.', choices: [ { text: '🏥 즉시 병원 데려가기', good: true, effect: '빠른 대처로 나았어요!', statChange: {happiness: 20, stamina: 20}, score: 15 }, { text: '🕐 지켜보기', good: false, effect: '증상이 심해졌어요...', statChange: {happiness: -20, stamina: -25}, score: -15 } ] },
+  { type: 'home', emoji: '🪮', title: '털이 엄청 빠져요!', desc: '방 바닥이 털투성이예요!', choices: [ { text: '🖌️ 빗질해주기', good: true, effect: '털 날림이 줄었어요!', statChange: {cleanliness: 15, happiness: 10}, score: 10 }, { text: '😤 그냥 두기', good: false, effect: '청결도가 더 떨어졌어요.', statChange: {cleanliness: -20}, score: -5 } ] },
+  { type: 'home', emoji: '🍖', title: '식탁 위 음식을 노려봐요!', desc: '강아지가 사람 음식을 먹으려 해요!', choices: [ { text: '🚫 단호히 막기', good: true, effect: '강아지 건강을 지켰어요.', statChange: {happiness: -5}, score: 12 }, { text: '💕 조금만 주기', good: false, effect: '사람 음식은 해로워요!', statChange: {fullness: 10, stamina: -15, cleanliness: -5}, score: -10 } ] },
+  { type: 'home', emoji: '😴', title: '손님이 만지려 해요!', desc: '친구가 강아지에게 갑자기 안으려 해요!', choices: [ { text: '🛡️ 천천히 소개하기', good: true, effect: '강아지가 안심했어요.', statChange: {happiness: 15}, score: 12 }, { text: '😅 그냥 두기', good: false, effect: '스트레스를 받았어요!', statChange: {happiness: -15, stamina: -10}, score: -8 } ] },
+  { type: 'home', emoji: '👃', title: '강아지한테 냄새가 나요...', desc: '씻은 지 일주일밖에 안 됐는데 냄새가 나요.', choices: [ { text: '🪮 빗질하며 미스트 뿌려주기', good: true, effect: '냄새도 줄고 기분 좋아요.', statChange: {cleanliness: 20, happiness: 5}, score: 12, tip: '💡 알고 계셨나요? 강아지는 3주에 1번 정도만 씻겨주는 것이 좋아요!' }, { text: '🛁 바로 목욕시키기', good: false, effect: '피부가 상할 수 있어요!', statChange: {cleanliness: 10, happiness: -15, stamina: -10}, score: -5, tip: '💡 알고 계셨나요? 강아지는 3주에 1번 정도만 씻겨주는 것이 좋아요!' } ] }
 ];
 
 // 이벤트 순차 재생 (비중복)
@@ -1362,7 +1253,6 @@ let homeEventQueue = [];
 function resetEventQueues() {
   walkEventQueue = ALL_EVENTS.filter(e => e.type === 'walk').map((_, i) => i);
   homeEventQueue = ALL_EVENTS.filter(e => e.type === 'home').map((_, i) => i);
-  // shuffle
   shuffleArray(walkEventQueue);
   shuffleArray(homeEventQueue);
 }
@@ -1555,7 +1445,6 @@ function answerQuiz(idx) {
     feedback.textContent = '❌ 틀렸어요! ' + q.feedback;
     feedback.className = 'quiz-feedback wrong show';
     playSound('wrong');
-    // Let them retry
     setTimeout(() => {
       quizAnswered = false;
       opts.forEach(o => {
@@ -1692,7 +1581,6 @@ function loadShop() {
 function buyItem(item) {
   const div = document.getElementById('shop-' + item.id);
 
-  // ── 이미 구매한 아이템 → 취소(환불) ──
   if (purchasedItems.has(item.id)) {
     budget += item.price;
     purchasedItems.delete(item.id);
@@ -1702,7 +1590,6 @@ function buyItem(item) {
     updateBudgetDisplay();
     addDiaryEntry(`↩️ ${item.name} 구매를 취소했어요. ${item.price}p 환불!`);
 
-    // 다른 아이템 구매 가능 여부 재계산
     SHOP_ITEMS.forEach(i => {
       const d = document.getElementById('shop-' + i.id);
       if (!purchasedItems.has(i.id)) {
@@ -1714,7 +1601,6 @@ function buyItem(item) {
     return;
   }
 
-  // ── 같은 essentialType 이미 구매됨 ──
   if (item.essentialType && [...purchasedItems].some(id => {
     const found = SHOP_ITEMS.find(i => i.id === id);
     return found && found.essentialType === item.essentialType;
@@ -1723,23 +1609,20 @@ function buyItem(item) {
     return;
   }
 
-  // ── 예산 부족 ──
   if (budget < item.price) {
     showWarning('포인트가 부족해요! 💸');
     div.classList.add('cant-afford');
     return;
   }
 
-  // ── 구매 ──
   budget -= item.price;
   purchasedItems.add(item.id);
   if (item.essentialType) purchasedEssentials.add(item.essentialType);
 
   div.classList.add('purchased');
   updateBudgetDisplay();
-  addDiaryEntry(`🛒 ${item.name} ${item.price}p에 구매했어요! (다시 누르면 취소)`);
+  addDiaryEntry(`🛒 ${item.name} ${item.price}p에 구매했어요!`);
 
-  // 다른 아이템 구매 가능 여부 재계산
   SHOP_ITEMS.forEach(i => {
     const d = document.getElementById('shop-' + i.id);
     if (!purchasedItems.has(i.id)) {
@@ -1774,10 +1657,21 @@ function startSimulation() {
   hourIdx = 0;
   currentMonth = 1;
   currentStage = 0;
+  
   totalHappiness = 0;
   totalCleanliness = 0;
+  totalFullness = 0;   // 추가
+  totalStamina = 0;    // 추가
   eventScore = 0;
   actionCount = 0;
+
+  // [추가] 재시작 시 히스토리도 깨끗하게 초기화
+  warningHistory = {
+    happiness: false,
+    fullness: false,
+    cleanliness: false,
+    stamina: false
+  };
 
   document.getElementById('stat-dog-name').textContent = dogName;
   showScreen('game');
@@ -1802,14 +1696,12 @@ function advanceTime() {
   hourIdx++;
   if (hourIdx >= HOURS.length) {
     hourIdx = 0;
-    // 하루치 스탯 감소 (하루가 지남)
     const fullnessDecay = currentStage === 0 ? -20 : -15;
     applyStatChange({ happiness: -5, fullness: fullnessDecay, cleanliness: -3, stamina: 0 });
   }
   document.getElementById('stat-day').textContent = getTimeLabel();
 }
 
-// 재우기: 한 달 경과
 function advanceMonth() {
   currentMonth++;
   hourIdx = 0;
@@ -1818,12 +1710,10 @@ function advanceMonth() {
   applyStatChange({ happiness: -5, fullness: fullnessDecay, cleanliness: -5, stamina: 0 });
 
   if (currentMonth > 7) {
-    // 다음 단계로
     currentStage++;
     if (currentStage >= STAGES.length) {
-      // 노견 7달 완료 → 엔딩
       triggerEnding();
-      return false; // 종료 신호
+      return false; 
     }
     currentMonth = 1;
     showPhaseTransition();
@@ -1833,11 +1723,7 @@ function advanceMonth() {
     addDiaryEntry(`📅 ${currentMonth - 1}달이 지났어요. 어느새 ${STAGES[currentStage].name}! 🐾`, 'milestone');
   }
   document.getElementById('stat-day').textContent = getTimeLabel();
-  return true; // 계속 진행
-}
-
-function checkStageUp() {
-  // month 기반이라 advanceMonth에서 직접 처리. 이 함수는 호환용으로 비워둠
+  return true;
 }
 
 // ============================================================
@@ -1855,7 +1741,6 @@ function doAction(action) {
   
   switch(action) {
     case 'feed':
-      // 아기강아지는 포만감 오름이 더 빨리 사라지므로 게임플레이 유도
       changes = { fullness: 30, cleanliness: -10 };
       text = `🍚 밥을 줬어요. ${dogName}가 맛있게 먹었어요! 포만감↑ 청결도↓`;
       break;
@@ -1870,7 +1755,6 @@ function doAction(action) {
       triggerEvent = Math.random() < 0.3;
       break;
     case 'wash':
-      // 목욕은 청결↑ 체력↓ 행복↓ (강아지가 싫어하는 편)
       changes = { cleanliness: 40, stamina: -10, happiness: -8 };
       text = `🧽 씻겼어요! 깨끗해진 ${dogName}! 청결↑ 체력↓ 행복↓ (목욕이 싫어요~)`;
       break;
@@ -1880,7 +1764,6 @@ function doAction(action) {
       triggerEvent = Math.random() < 0.3;
       break;
     case 'rest': {
-      // 쉬기: 3시간 경과, 체력 30 회복 (낮잠 개념)
       stats.stamina = Math.min(100, stats.stamina + 30);
       text = `🛋️ ${dogName}가 잠깐 쉬었어요! 3시간이 지나갔어요. 체력 +30`;
       for (let i = 0; i < 3; i++) {
@@ -1896,9 +1779,8 @@ function doAction(action) {
       return;
     }
     case 'sleep': {
-      // 재우기: 한 달 경과, 체력 완전 회복
       stats.stamina = 100;
-      stats.fullness = Math.max(0, stats.fullness - 10); // 한 달 지나니 배고픔
+      stats.fullness = Math.max(0, stats.fullness - 10);
       text = `💤 ${dogName}가 푹 잤어요! 한 달이 훌쩍 지났어요. 체력 완전 회복!`;
       addDiaryEntry(text);
       const cont = advanceMonth();
@@ -1922,6 +1804,8 @@ function doAction(action) {
     actionCount++;
     totalHappiness += stats.happiness;
     totalCleanliness += stats.cleanliness;
+    totalFullness += stats.fullness;   // 추가
+    totalStamina += stats.stamina;     // 추가
     buttons.forEach(b => b.disabled = false);
     return;
   }
@@ -1938,6 +1822,8 @@ function doAction(action) {
     actionCount++;
     totalHappiness += stats.happiness;
     totalCleanliness += stats.cleanliness;
+    totalFullness += stats.fullness;   // 추가
+    totalStamina += stats.stamina;     // 추가
     buttons.forEach(b => b.disabled = false);
     return;
   }
@@ -1953,6 +1839,8 @@ function doAction(action) {
   actionCount++;
   totalHappiness += stats.happiness;
   totalCleanliness += stats.cleanliness;
+  totalFullness += stats.fullness;   // 추가
+  totalStamina += stats.stamina;     // 추가
   
   buttons.forEach(b => b.disabled = false);
 }
@@ -1968,6 +1856,10 @@ function buildStatText(changes) {
 function applyStatChange(changes) {
   Object.entries(changes).forEach(([key, val]) => {
     stats[key] = Math.max(0, Math.min(100, stats[key] + val));
+    // [추가] 스탯이 0으로 방치된 적이 있으면 히스토리에 기록
+    if (stats[key] <= 0) {
+      warningHistory[key] = true;
+    }
   });
   updateStatUI();
 }
@@ -1999,13 +1891,9 @@ function checkWarnings() {
 //  SCENE UPDATE
 // ============================================================
 const STAGE_SCENES = [
-  // Stage 0: 아기
   { sad: '😿', tired: '😴', dirty: '🙈', happy: '🐶', normal: '🐶', energetic: '🐕' },
-  // Stage 1: 활발
   { sad: '😞', tired: '💤', dirty: '🙊', happy: '🐕', normal: '🐕', energetic: '🏃' },
-  // Stage 2: 성견
   { sad: '😔', tired: '😪', dirty: '🤢', happy: '🦮', normal: '🦮', energetic: '🦮' },
-  // Stage 3: 노견
   { sad: '😔', tired: '🛌', dirty: '😓', happy: '🐕‍🦺', normal: '🐕‍🦺', energetic: '🌸' },
 ];
 
@@ -2045,9 +1933,6 @@ function updateScene() {
   document.getElementById('dog-status-text').textContent = text;
 }
 
-// ============================================================
-//  GAME UI UPDATE
-// ============================================================
 function updateGameUI() {
   updateStatUI();
   document.getElementById('stat-day').textContent = getTimeLabel();
@@ -2081,7 +1966,7 @@ function resolveEvent(choice) {
   applyStatChange(choice.statChange);
   eventScore += choice.score;
   const type = choice.good ? 'milestone' : 'warning';
-  addDiaryEntry(`u26a1 uc774ubca4ud2b8: ${choice.effect}`, type);
+  addDiaryEntry(`⚡ 이벤트: ${choice.effect}`, type);
   if (choice.tip) {
     addDiaryEntry(choice.tip, 'milestone');
     setTimeout(() => showTipPopup(choice.tip), 400);
@@ -2103,12 +1988,10 @@ function addDiaryEntry(text, type = '') {
   const timeSpan = document.createElement('span');
   timeSpan.className = 'entry-time';
   timeSpan.textContent = getTimeLabel();
-  
   entry.appendChild(timeSpan);
   entry.appendChild(document.createTextNode(text));
   entries.appendChild(entry);
   
-  // Auto scroll to bottom
   entries.scrollTop = entries.scrollHeight;
 }
 
@@ -2159,7 +2042,6 @@ function showStatChange(text) {
 }
 
 function showTipPopup(tipText) {
-  // 팁 전용 모달 (이벤트 팝업 재활용)
   document.getElementById('event-emoji').textContent = '💡';
   document.getElementById('event-title').textContent = '알고 계셨나요?';
   document.getElementById('event-desc').textContent = tipText;
@@ -2174,87 +2056,89 @@ function showTipPopup(tipText) {
 }
 
 // ============================================================
-//  ENDING
+//  ENDING (AND 조건 및 방치 이력 개편)
 // ============================================================
 function triggerEnding() {
   const avgHappiness  = actionCount > 0 ? totalHappiness  / actionCount : 30;
+  const avgFullness   = actionCount > 0 ? totalFullness   / actionCount : 30;
   const avgCleanliness = actionCount > 0 ? totalCleanliness / actionCount : 30;
+  const avgStamina    = actionCount > 0 ? totalStamina    / actionCount : 30;
 
-  // ── 점수 설계 (최대 ~200점, 현실적 최고점 ~160점) ──
-  // 평균 행복도 (0~100) × 1.0   → 최대 100
-  // 평균 청결도 (0~100) × 0.4   → 최대  40
-  // 이벤트 점수 (올정답 ~130)   → 별도 반영
-  // 단, 이벤트 점수는 ÷2 하여 반영 (과도한 영향 억제)
-  const baseScore   = avgHappiness * 1.0 + avgCleanliness * 0.4;
-  const eventBonus  = eventScore / 2;          // 정답 10점짜리 기준 절반만
-  const totalScore  = baseScore + eventBonus;
+  // 전체 평균 계산 (F등급 산정 등에 활용)
+  const overallAvg = (avgHappiness + avgFullness + avgCleanliness + avgStamina) / 4;
 
-  // ── 엄격 기준 (꾸준히 신경 써야 달성) ──
-  // 어질리티  : base ~120+ (행복 85↑ 청결 75↑) + 이벤트 대부분 정답 → 총 ~145
-  // 인기쟁이  : base ~100+ 이벤트 절반 이상 정답 → 총 ~120
-  // 집지키미  : base ~82+  이벤트 보통             → 총 ~95
-  // 평범행복  : base ~65+                           → 총 ~75
-  // 애정부족  : base ~47+                           → 총 ~55
-  // 방치견    : base ~30+                           → 총 ~38
-  // 불쌍한   : 그 이하
+  let ending = {};
 
-  let ending;
+  // 1. 방치 히스토리 확인 (게임 중 한 번이라도 스탯이 0 이하로 떨어진 적이 있는지)
+  const isNeglected = warningHistory.happiness || warningHistory.fullness || 
+                      warningHistory.cleanliness || warningHistory.stamina;
 
-  if (totalScore >= 143) {
+  // 2. 과락 기준(50점 미만) 스탯 확인
+  let weakPoints = [];
+  if (avgHappiness < 50) weakPoints.push("행복");
+  if (avgFullness < 50) weakPoints.push("밥(포만감)");
+  if (avgCleanliness < 50) weakPoints.push("청결");
+  if (avgStamina < 50) weakPoints.push("체력");
+
+  // === [S등급] 모든 스탯이 80 이상이고(AND), 한 번도 방치한 적 없음 ===
+  if (avgHappiness >= 80 && avgFullness >= 80 && avgCleanliness >= 80 && avgStamina >= 80 && !isNeglected) {
     ending = {
       emoji: '🏆',
       grade: 'S',
-      title: '국가대표 어질리티 선수견!',
+      title: '환상의 짝꿍! (최고의 반려인)',
       color: '#FF6B9D',
-      desc: `${dogName}는 견생 내내 완벽한 돌봄을 받으며 국가대표 어질리티 선수견이 됐어요! 정말 대단한 보호자예요. 이 정도면 진짜 강아지를 키울 준비가 충분히 됐어요! 🌟`
+      desc: `모든 것을 완벽하게 돌봐주셨군요! ${dogName}가 견생 최고의 행복을 누렸습니다. 꼼수 없이 모든 것을 골고루 돌봐준 당신, 반려견과 평생을 함께할 완벽한 자격이 있어요! 🌟`
     };
-  } else if (totalScore >= 118) {
-    ending = {
-      emoji: '⭐',
-      grade: 'A',
-      title: '동네 인기쟁이!',
-      color: '#FFB347',
-      desc: `${dogName}는 동네에서 가장 사랑받는 강아지가 됐어요! 산책할 때마다 이웃들이 먼저 인사를 건네고, 간식을 주려 해요. 훌륭한 보호자예요! 🐾`
-    };
-  } else if (totalScore >= 93) {
+  } 
+  // === [A등급] 모든 스탯 70 이상 (방치 이력에 따라 분기) ===
+  else if (avgHappiness >= 70 && avgFullness >= 70 && avgCleanliness >= 70 && avgStamina >= 70) {
+    if (isNeglected) {
+      // 평균 점수는 높으나 방치 이력이 있는 경우 페널티
+      ending = {
+        emoji: '😅',
+        grade: 'A',
+        title: '아차상 (초심 잃은 반려인)',
+        color: '#FFA726',
+        desc: `최종 상태는 좋지만 중간에 ${dogName}가 너무 힘들어서 쓰러질 뻔한 적(스탯 0 방치)이 있네요. 생명을 돌보는 일은 한순간도 방심해선 안 된답니다! 조금 더 분발해 봐요.`
+      };
+    } else {
+      ending = {
+        emoji: '⭐',
+        grade: 'A',
+        title: '훌륭한 반려인!',
+        color: '#4CAF50',
+        desc: `${dogName}를 안정적으로 잘 돌봐주셨습니다. 부족함 없이 모든 면에서 건강하게 자랐어요! 훌륭합니다. 🐾`
+      };
+    }
+  } 
+  // === [B등급] 과락 스탯(50점 미만)이 하나도 없는 경우 ===
+  else if (weakPoints.length === 0) {
     ending = {
       emoji: '🏠',
       grade: 'B',
-      title: '듬직한 집 지키미!',
-      color: '#7CB9E8',
-      desc: `${dogName}는 가족들 옆을 묵묵히 지키는 믿음직한 반려견이 됐어요. 잘 돌봐줬어요! 조금만 더 규칙적으로 챙겼더라면 최고의 견생을 줄 수 있었을 거예요.`
+      title: '노력하는 초보 반려인',
+      color: '#2196F3',
+      desc: `서툴렀지만 끝까지 책임지고 돌봐주었어요. 모든 상태를 50점 이상 골고루 신경 쓰느라 고생 많았습니다! 조금 더 세심하게 챙겨주면 완벽할 거예요. 💕`
     };
-  } else if (totalScore >= 68) {
+  } 
+  // === [C등급] 과락 스탯이 존재하는 경우 ===
+  else if (overallAvg >= 40) {
     ending = {
-      emoji: '🐾',
+      emoji: '🌧️',
       grade: 'C',
-      title: '평범하고 그럭저럭 행복한 반려견',
-      color: '#90C97A',
-      desc: `${dogName}는 특별히 나쁘지도, 아주 좋지도 않은 하루하루를 보냈어요. 반려동물을 키우려면 매일 조금 더 세심한 돌봄이 필요해요. 다음엔 더 잘할 수 있을 거예요! 💕`
+      title: '준비가 더 필요한 반려인',
+      color: '#757575',
+      desc: `${dogName}가 많이 힘들어했어요. 다른 걸 아무리 잘했어도 특히 <b>[${weakPoints.join(", ")}]</b> 관리가 부족했습니다. 모든 부분을 골고루 챙길 줄 알아야 진짜 준비된 반려인이에요! 💪`
     };
-  } else if (totalScore >= 47) {
-    ending = {
-      emoji: '💛',
-      grade: 'D',
-      title: '애정이 많이 부족했던 강아지',
-      color: '#FFD700',
-      desc: `${dogName}는 조금 외롭고 힘든 시간을 보냈어요. 밥도 자주 굶고, 씻기지도 못했어요. 강아지는 매일의 규칙적인 돌봄이 필수랍니다. 책임감을 더 키워봐요!`
-    };
-  } else if (totalScore >= 28) {
-    ending = {
-      emoji: '😢',
-      grade: 'E',
-      title: '방치된 강아지...',
-      color: '#BDB5D5',
-      desc: `${dogName}는 제대로 돌봄을 받지 못했어요. 배도 많이 고팠고, 자주 아팠어요. 반려동물을 기르는 건 단순한 재미가 아니라 큰 책임이에요. 다시 도전해봐요! 😔`
-    };
-  } else {
+  } 
+  // === [F등급] 전반적인 돌봄 포기 상태 ===
+  else {
     ending = {
       emoji: '💔',
       grade: 'F',
       title: '불쌍한 강아지 😭',
       color: '#FF6B6B',
-      desc: `${dogName}는 정말 힘든 견생을 보냈어요. 이번 게임을 통해 반려동물 돌봄이 얼마나 중요한지 알았죠? 실제 동물을 기르기 전, 꼭 충분히 공부하고 준비해요. 모든 동물은 사랑받을 자격이 있어요. 💪`
+      desc: `${dogName}는 제대로 된 돌봄을 받지 못해 정말 힘든 견생을 보냈어요. 반려동물 돌봄은 단순히 예뻐하는 게 아니라 생명을 책임지는 무거운 일이랍니다. 반드시 충분히 공부하고 준비해야 해요.`
     };
   }
 
@@ -2262,26 +2146,32 @@ function triggerEnding() {
   document.getElementById('ending-title').textContent = ending.title;
   document.getElementById('ending-dog-name').innerHTML =
     `<span style="color:${ending.color}">${dogName}</span>의 견생 이야기`;
-  document.getElementById('ending-desc').textContent = ending.desc;
+  document.getElementById('ending-desc').innerHTML = ending.desc; // HTML 태그(b태그) 허용을 위해 innerHTML 사용
 
   const statsDiv = document.getElementById('ending-stats');
+  // 엔딩 화면에서도 모든 4가지 스탯 결과를 보여주도록 수정
   statsDiv.innerHTML = `
     <div class="ending-stat">
       <span class="ending-stat-emoji">💖</span>
-      <span class="ending-stat-label">평균 행복도</span>
+      <span class="ending-stat-label">행복도</span>
       <span class="ending-stat-val">${Math.round(avgHappiness)}</span>
     </div>
     <div class="ending-stat">
+      <span class="ending-stat-emoji">🍗</span>
+      <span class="ending-stat-label">포만감</span>
+      <span class="ending-stat-val">${Math.round(avgFullness)}</span>
+    </div>
+    <div class="ending-stat">
       <span class="ending-stat-emoji">🫧</span>
-      <span class="ending-stat-label">평균 청결도</span>
+      <span class="ending-stat-label">청결도</span>
       <span class="ending-stat-val">${Math.round(avgCleanliness)}</span>
     </div>
     <div class="ending-stat">
       <span class="ending-stat-emoji">⚡</span>
-      <span class="ending-stat-label">이벤트 점수</span>
-      <span class="ending-stat-val">${eventScore >= 0 ? '+' : ''}${eventScore}</span>
+      <span class="ending-stat-label">체력</span>
+      <span class="ending-stat-val">${Math.round(avgStamina)}</span>
     </div>
-    <div class="ending-stat" style="background:linear-gradient(135deg,#FFF0F5,#F0F8FF);">
+    <div class="ending-stat" style="background:linear-gradient(135deg,#FFF0F5,#F0F8FF); width: 100%; margin-top: 10px;">
       <span class="ending-stat-emoji">🏅</span>
       <span class="ending-stat-label">종합 등급</span>
       <span class="ending-stat-val" style="font-size:20px;color:${ending.color}">${ending.grade}</span>
